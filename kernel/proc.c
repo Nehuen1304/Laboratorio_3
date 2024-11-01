@@ -130,6 +130,7 @@ found:
   p->priority = NPRIO - 1; // Highest priority
   p->count_sched = 0;
   p->quantum_used = 0;
+  p->time_cpu = 0;
   // Allocate a trapframe page.
   if ((p->trapframe = (struct trapframe *)kalloc()) == 0)
   {
@@ -470,6 +471,7 @@ find_highest_priority_proc(void)
 
   return highest_priority_proc;
 }
+  int start_tick, end_tick;
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -481,7 +483,6 @@ void scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-
   c->proc = 0;
   for (;;)
   {
@@ -499,6 +500,7 @@ void scheduler(void)
         // to release its lock and then reacquire it
         // before jumping back to us.
         p->state = RUNNING;
+        start_tick = ticks;
         c->proc = p;
         p->count_sched++;
         p->quantum_used = 1;
@@ -548,6 +550,8 @@ void sched(void)
     panic("sched interruptible");
 
   intena = mycpu()->intena;
+  end_tick = ticks; 
+  p->time_cpu = p->time_cpu + (end_tick - start_tick);
   swtch(&p->context, &mycpu()->context);
   mycpu()->intena = intena;
 }

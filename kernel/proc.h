@@ -108,4 +108,5 @@ struct proc {
   uint32 priority;
   uint32 count_sched;
   int quantum_used;
+  int time_cpu;
 };

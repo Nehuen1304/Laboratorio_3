@@ -63,6 +63,8 @@ iobench(int N, int pid)
     elapsed_ticks = end_tick - start_tick;
     metric = (total_iops*1000)/elapsed_ticks;  // Cambiar esto por la métrica adecuada
     measurements[i] = metric;
+    int timecpu = cputime();
+    printf("TIMECPU: %d\n",timecpu);
     printf("%d\t[iobench]\tPerfomance\t%d\t%d\t%d\n",
            pid, metric, start_tick, elapsed_ticks);
   }

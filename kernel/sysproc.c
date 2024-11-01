@@ -89,3 +89,12 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+uint64
+sys_cputime(void)
+{
+  uint time_used;
+  struct proc *p = myproc();
+  time_used = p->time_cpu;
+  return time_used;
+}
