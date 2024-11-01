@@ -212,7 +212,7 @@ No, los procesos no se ejecutan en paralelo ya que al hacer `make CPUS=1 qemu` e
 
 
 #### ¿En promedio, qué proceso o procesos se ejecutan primero? Hacer una observación cualitativa.
-  
+
 Dado que la política de implementación es *Round-Robin*, el proceso que se ejecuta primero es el primero en la cola, es decir el primer proceso en ser reconocido por el sistema es el primero que se va a ejecutar.
 
 
@@ -612,6 +612,40 @@ Nuestra implementación actual sufre de starvation. Si recordamos las reglas de 
 Lo que ocurre es que se producirá starvation: los procesos CPU se ejecutarán en un tiempo muy lejano o, directamente, no se ejecutarán.
 Esto sucede por la falta de la Regla 5, que establece el ascenso de todos los procesos a la prioridad más alta en un tiempo determinado. Si esto sucediera, eventualmente los procesos CPU volverían a ser planificados.
 
+
+Para mejorar y dar más profundidad a la parte de conclusiones finales del informe, primero es necesario entender las observaciones y resultados previos documentados en el informe. Aquí hay una propuesta para profundizar las conclusiones finales:
+
+---
+
+## Conclusiones Finales
+
+El análisis y los experimentos realizados sobre el planificador de procesos `xv6-riscv` nos permiten extraer varias conclusiones clave sobre su comportamiento y eficiencia.
+
+### Política de Planificación y Estados de Proceso
+
+- **Política de Round Robin**: La política de planificación Round Robin utilizada en `xv6-riscv` garantiza que todos los procesos reciban tiempo de CPU de manera equitativa. Sin embargo, presenta limitaciones cuando se trata de procesos con diferentes perfiles de carga, como CPU-bound e I/O-bound.
+- **Estados de Proceso**: Los estados bien definidos y las transiciones entre ellos permiten un control granular sobre la ejecución de procesos. Esto facilita la implementación de políticas de planificación y manejo de recursos. Las funciones asociadas a cada estado aseguran que los procesos puedan cambiar de estado de manera eficiente y controlada.
+
+### Quantum y Cambio de Contexto
+
+- **Definición y Duración del Quantum**: La definición de un quantum en `xv6-riscv` y su duración establecida en 1000000 ciclos (~1/10 segundo en QEMU) es adecuada para sistemas de tiempo compartido. Sin embargo, la eficiencia del sistema puede verse afectada por el tiempo consumido en los cambios de contexto, especialmente si el quantum es demasiado pequeño.
+- **Impacto del Cambio de Contexto**: Experimentos con valores reducidos de quantum demostraron que el tiempo consumido por los cambios de contexto puede ser significativo. Esto puede llevar a situaciones donde los procesos no tengan suficiente tiempo para ejecutar su código, resultando en una sobrecarga de cambios de contexto y una disminución en el rendimiento del sistema.
+
+### Rendimiento de Procesos I/O-bound y CPU-bound
+
+- **Rendimiento de Procesos I/O-bound**: Los procesos I/O-bound suelen ser interrumpidos con mayor frecuencia debido a su dependencia de operaciones de entrada/salida. Esto los hace más susceptibles a la política de planificación y el tiempo de quantum definido. La ejecución en un entorno con múltiples procesos I/O-bound puede llevar a una mejora en el rendimiento, ya que estos procesos pueden ser programados de manera más eficiente.
+- **Rendimiento de Procesos CPU-bound**: Los procesos CPU-bound tienden a aprovechar mejor el quantum disponible, ya que están orientados a realizar operaciones intensivas de cálculo. 
+
+### Comparación y Observaciones
+
+Como observacion general, luego de los experimentos y las comparaciones entre diferentes planificadores, pudimos notar lo siguiente:
+Como planificador, Round Robin, era bastante consistene en quatums utilizados por procesos cpubound y tendia a darle tiempo equitativo a los procesos sin importarle si era cpubound e iobound. Esto perjudicaba en parte a los procesos iobound ya que tenian que, al no tener mas prioridad que los cpubound, tenian que espera su turno de cpu. A pesar de esto, este planificador puede ser ùtil en sistemas donde los procesos sean del mismo tipo, ya que eligiendo un quantum adecuado y sumando a su sencilla implementacion, puede resultar en un planificador eficiente.
+Por otra parte mlfq beneficia a los procesos iobound porque les asigna una prioridad mas alta al entregar la cpu mas ràpidamente y esto a su vez permite que cuando la vuelvan a necesitar, por lo que puede ser util en sistemas donde se interactùe mas seguido con el usuario. 
+En conclusion ambos planificadores sirven, pero en general es mejor el mlfq por su adaptabilidad en cuanto a tipos de procesos. 
+Otra cosa que notamos es que si reducimos el quatum en cualquiera de los dos planificadores los procesos iobound se ven mas beneficiados que los cpubound por lo mismo que mencionamos arriba, reciben la cpu mas rapidamente si el quantum es menor.
+- **Comparación de Métricas**: La métrica utilizada para comparar operaciones de CPU e I/O (kops/ticks e iops/ticks) proporciona una base uniforme para evaluar el rendimiento. La multiplicación por 1000 ayuda a rescalar las métricas y evitar la pérdida de información.
+- **Ejecución Paralela**: La ejecución de procesos en un entorno limitado a un solo núcleo (CPUS=1) demuestra que no hay paralelismo real. La planificación adecuada y la optimización del tiempo de quantum son cruciales para maximizar la eficiencia en tales entornos.
+- 
 #### Resultados de experimento 1(RR):
 
 <a name="experimento1"></a>
